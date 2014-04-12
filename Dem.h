@@ -6,7 +6,8 @@
  
 #include <iostream>
 using namespace std;
-
+#include <vector>
+#include "Triangle.h"
 #include <stdio.h>
 #ifdef __APPLE__ 
 #  include <GLUT/glut.h>
@@ -29,12 +30,14 @@ private:
 	float scalex;
 	float scalez;
 	float scaley;
+	vector<Triangle> triangulation;
 	
 public:
     Dem(ifstream& myfile);
     Dem();
     void inputFile(ifstream& myfile);
     void randomMidpointDisplacement();
+    void triangulateDEM(vector<Point> allPoints);
 	Dem(int cols, int rows, float xcorn, float ycorn, float size);
 	// getters
 	int getCols();

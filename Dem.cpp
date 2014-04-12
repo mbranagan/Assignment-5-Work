@@ -9,8 +9,11 @@
 #include <fstream>
 #include <cmath>
 #include <cassert>
+
 #define SCALE_FACTOR 4
 #define SCALEY_FACTOR .5
+
+vector <Point> currentDEM;
 
 
 
@@ -165,7 +168,25 @@ Dem :: Dem(int cols, int rows, float xcorn, float ycorn, float size){
 	float elevations[arraySize];
 }
 
+void Dem::drawTraingulation(){
+	for (int i = 0; i < triangulation.size(); i++){
+		glBegin(GL_TRIANGLE_STRIP);
+			glVertex3f(triangulation.at(i).get1X(), triangulation.at(i).get1Y(), triangulation.at(i).get1Z());
+			glVertex3f(triangulation.at(i).get2X(), triangulation.at(i).get2Y(), triangulation.at(i).get2Z());
+			glVertex3f(triangulation.at(i).get3X(), triangulation.at(i).get3Y(), triangulation.at(i).get3Z());
+		glEnd();
+	}
+}
+void Dem::triangulateDEM(vector<Point> allPoints){
 
+	for (int i = 0; i < nrows; i++){
+		for (int j = 0; j<ncols; j++){
+			Triangle newTri(currentDEM.at((i*ncols)+j), currentDEM.at((i*ncols)+j+1), currentDEM.at(((i+1)*ncols)+j+1));
+			//triangulation.push_back(newTri);
+		}
+	}
+	
+}
 void Dem:: drawDEM(float windowWidth, float windowHeight, float rotateX, float rotateY, float rotateZ, int increase, int decrease, float anglex, float angley, float anglez ) {
 	float* tempPointer = elevationValues;
 	//glRotatef(angle, rotateX, rotateY, rotateZ);
@@ -197,6 +218,8 @@ void Dem:: drawDEM(float windowWidth, float windowHeight, float rotateX, float r
 			RB = 1-(*tempPointer)/maxValue;
 			glColor3f(RB, 1.0f, RB);
 			glVertex3f(startx, yvalue, startz);
+			Point newPoint(startx, yvalue,startz);
+			currentDEM.push_back(newPoint);
 			startx = startx +tempcell;//-windowWidth/2;// tempcell;
 			tempPointer++;
 		}
