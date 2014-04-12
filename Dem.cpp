@@ -168,21 +168,55 @@ Dem :: Dem(int cols, int rows, float xcorn, float ycorn, float size){
 	float elevations[arraySize];
 }
 
-void Dem::drawTraingulation(){
+void Dem::drawTriangulation(){
 	for (int i = 0; i < triangulation.size(); i++){
 		glBegin(GL_TRIANGLE_STRIP);
-			glVertex3f(triangulation.at(i).get1X(), triangulation.at(i).get1Y(), triangulation.at(i).get1Z());
-			glVertex3f(triangulation.at(i).get2X(), triangulation.at(i).get2Y(), triangulation.at(i).get2Z());
-			glVertex3f(triangulation.at(i).get3X(), triangulation.at(i).get3Y(), triangulation.at(i).get3Z());
+			float x1 = triangulation.at(i).get1X();
+			float x2 = triangulation.at(i).get2X();
+			float x3 = triangulation.at(i).get3X();
+			float y1 = triangulation.at(i).get1Y();
+			float y2 = triangulation.at(i).get2Y();
+			float y3 = triangulation.at(i).get3Y();
+			float z1 = triangulation.at(i).get1Z();
+			float z2 = triangulation.at(i).get2Z();
+			float z3 = triangulation.at(i).get3Z();
+
+			glNormal3f(normals.at(i).getX(), normals.at(i).getY(), normals.at(i).getZ());
+			glVertex3f(x1, y1, z1);
+			glVertex3f(x2, y2, z2);
+			glVertex3f(x3, y3, z3);
 		glEnd();
 	}
 }
-void Dem::triangulateDEM(vector<Point> allPoints){
 
+void Dem::calculateNormals(){
+	normals.clear();
+	for (int i = 0; i < triangulation.size(); i++){
+		float x1 = triangulation.at(i).get1X();
+		float x2 = triangulation.at(i).get2X();
+		float x3 = triangulation.at(i).get3X();
+		float y1 = triangulation.at(i).get1Y();
+		float y2 = triangulation.at(i).get2Y();
+		float y3 = triangulation.at(i).get3Y();
+		float z1 = triangulation.at(i).get1Z();
+		float z2 = triangulation.at(i).get2Z();
+		float z3 = triangulation.at(i).get3Z();
+
+		Point v1(x2-x1, y2-y1, z2-z1);
+		Point v2(x3-x1, y3-y1, z3-z1);
+		Point surfaceNorm((y1*z2)-(z1*y2), (z1*x2)-(x1*z2), (x1*y2)-(y1*x2));
+		normals.push_back(surfaceNorm);
+	}
+}
+void Dem::triangulateDEM(vector<Point> allPoints){
+	triangulation.clear();
 	for (int i = 0; i < nrows; i++){
 		for (int j = 0; j<ncols; j++){
-			Triangle newTri(currentDEM.at((i*ncols)+j), currentDEM.at((i*ncols)+j+1), currentDEM.at(((i+1)*ncols)+j+1));
-			//triangulation.push_back(newTri);
+			Point p1 = currentDEM.at((i*ncols)+j);
+			Point p2 = currentDEM.at((i*ncols)+j+1);
+			Point p3 = currentDEM.at(((i+1)*ncols)+j+1);
+			Triangle newTri(p1, p2, p3);
+			triangulation.push_back(newTri);
 		}
 	}
 	

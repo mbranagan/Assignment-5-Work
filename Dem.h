@@ -31,12 +31,15 @@ private:
 	float scalez;
 	float scaley;
 	vector<Triangle> triangulation;
+	vector<Point> normals;
 	
 public:
     Dem(ifstream& myfile);
     Dem();
     void inputFile(ifstream& myfile);
     void randomMidpointDisplacement();
+    void drawTriangulation();
+    void calculateNormals();
     void triangulateDEM(vector<Point> allPoints);
 	Dem(int cols, int rows, float xcorn, float ycorn, float size);
 	// getters

@@ -7,7 +7,7 @@
 #endif
 using namespace std; 
 
-Triangle::Traingle(Point uno, Point dos, Point tres){
+Triangle::Triangle(Point uno, Point dos, Point tres){
 	float x, y, z;
 
 	x = uno.getX();
