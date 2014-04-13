@@ -49,7 +49,8 @@ bool quadraticSpline = false;
 int increseGrid = 2;
 int decreaseGrid = 0;
 int gridCounter = 0;
-
+int smooth = 0; // smooth shading is off = flat shading
+int lighting = 1; // lighting default is on
 void displayInstructions(){
   cout << "All points are being displayed." << endl;
   cout << "Press 8 to rotate the grid in a clockwise direction." << endl;
@@ -61,59 +62,62 @@ void displayInstructions(){
   cout << "Right click to view a pop-up menu that displays your spline options." << endl;  
 }
 
-void inputFile(){
+bool inputFile(){
   ifstream myfile;   // input stream 
   string fileName;
   
   //input file names and sorting method
-  //cout << "Please enter the file name with extension of the Esri grid you would like displayed: " << endl;  
-  //getline(cin, fileName);
+  cout << "Please type the name of the file holding the DEM you would like to use. If you would like to generate a DEM press 'g'" << endl;
+ // getline(cin, fileName);
+   fileName = "testfile2.txt";
+  if (fileName != "g"){
   
-  fileName = "testfile.txt";
-  myfile.open (fileName.c_str());
+    myfile.open (fileName.c_str());
 
-  assert( myfile.is_open() );
-  displayInstructions();
-  //CurrentValues.inputFile(myfile);
-  CurrentValues.randomMidpointDisplacement();
-  CurrentValues.drawDEM(WINDOW_WIDTH, WINDOW_HEIGHT, rotateX, rotateY, rotateZ, increseGrid, decreaseGrid, ROT_INCRX, ROT_INCRY, ROT_INCRZ);
-
+    assert( myfile.is_open() );
+    //displayInstructions();
+    CurrentValues.inputFile(myfile);
+    // CurrentValues.randomMidpointDisplacement();
+   // CurrentValues.drawDEM(WINDOW_WIDTH, WINDOW_HEIGHT, rotateX, rotateY, rotateZ, increseGrid, decreaseGrid, ROT_INCRX, ROT_INCRY, ROT_INCRZ);
+    return true;
+  } else {
+    return false;
+  }
 }
 
 void display ()
 {
-  glClear (GL_COLOR_BUFFER_BIT);
+  glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glLoadIdentity ();
   //eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ
-  //assert(rotateX = 0.0 && rotateY == 0.0 && rotateZ == 0.0);
   
   gluLookAt (xval, yval, z, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0); 
   glColor3f (1.0, 0.0, 0.0);
   if (input == false){
-    inputFile();
-    glFlush ();
+    bool isThereInput;
+    isThereInput =inputFile();
+
+    if (isThereInput){
+      CurrentValues.calculatePoints(WINDOW_WIDTH, WINDOW_HEIGHT, rotateX, rotateY, rotateZ, ROT_INCRX, ROT_INCRY, ROT_INCRZ);
+      CurrentValues.drawTriangulation(WINDOW_WIDTH, WINDOW_HEIGHT, rotateX, rotateY, rotateZ, ROT_INCRX, ROT_INCRY, ROT_INCRZ);
+      glutPostRedisplay();
+    } else {
+
+    }
     input = true;
   }
-  else if (linearSpline==true)
-  {
-    CurrentValues.drawLinearSpline(WINDOW_WIDTH, WINDOW_HEIGHT, rotateX, rotateY, rotateZ, increseGrid, decreaseGrid, ROT_INCRX, ROT_INCRY, ROT_INCRZ);
+  else {
+    CurrentValues.drawTriangulation(WINDOW_WIDTH, WINDOW_HEIGHT, rotateX, rotateY, rotateZ, ROT_INCRX, ROT_INCRY, ROT_INCRZ);
     glutSwapBuffers();
   }
-  else if (quadraticSpline == true){
-    CurrentValues.drawQuadraticSpline(WINDOW_WIDTH, WINDOW_HEIGHT, rotateX, rotateY, rotateZ, increseGrid, decreaseGrid, ROT_INCRX, ROT_INCRY, ROT_INCRZ);
-    glutSwapBuffers();
-  }
-  else{
-    CurrentValues.drawDEM(WINDOW_WIDTH, WINDOW_HEIGHT, rotateX, rotateY, rotateZ, increseGrid, decreaseGrid, ROT_INCRX, ROT_INCRY, ROT_INCRZ);
-    glutSwapBuffers();
-   
-  }
+
   
 }
 
 void mymenu (int value)
 // Define actions for the menu based on values given in initmenu()
 {
+  GLfloat light0_pos[] = {0,0,0,0}; 
   switch (value) {
   case 1: cout << "Displaying a linear piecewise spline..." << endl; 
     linearSpline = true;
@@ -190,6 +194,56 @@ void myMouse (int button, int state, int x, int y)
 
 void init ()
 {
+  // 1.  set up lighting parameters 
+   //   a. set up light position or direction
+   GLfloat light0_pos[] = {-1,0,0,0};  // directional light along -x axis (west)
+   //GLfloat light0_pos[] = {10,0,0,1}; // positional;radiates in all directions 
+   //   b. define kind of light/material
+   //   Each defines how much of each color the light is or what color is
+   //   reflected by the material.
+   //   In other words, you could have a brilliant, white light, but a material
+   //   that only reflects blue.
+   GLfloat ambientlight[] = {0.1, 0.1, 0.1, 1};   // color of "overall" light
+   GLfloat diffuselight[] = {0.7, 0.7, 0.7, 1};   // color of diffuse light 
+   GLfloat specularlight[] = {1.0, 1.0, 1.0, 1};  // color of specular light
+   // For example, if you make this blue and keep the specular reflection of
+   // the material white in the red object, then the "shiny spot" will be
+   // a mixture of the red object and the blue light = purple.  Try it!
+
+   GLfloat ambientmaterial[] = {0.1, 0.1, 0.1, 1}; // color of reflected ambient
+   GLfloat diffusematerial[] = {0.7, 0.7, 0.7, 1}; 
+   GLfloat specularmaterial[] = {1.0, 1.0, 1.0, 1}; 
+   GLfloat shininessmaterial[] = {100.0};  // 0 means entire object;
+                             // >0 means smaller point reflection
+      
+   glClearColor (0.0, 0.0, 0.0, 0.0);
+   glEnable (GL_DEPTH_TEST);
+
+   // 2.  set flat or smooth shading; can be changed via menu
+   glShadeModel (GL_FLAT);
+   //glShadeModel (GL_SMOOTH);
+
+   // 3.  set up light properties using definitions above
+   glLightfv (GL_LIGHT0, GL_POSITION, light0_pos);  // light0 has position light0_pos
+   
+   // 4.  override default LIGHT0 parameters, using lighting definitions above
+   glLightfv (GL_LIGHT0, GL_AMBIENT, ambientlight);
+   glLightfv (GL_LIGHT0, GL_DIFFUSE, diffuselight);
+   glLightfv (GL_LIGHT0, GL_SPECULAR, specularlight);
+
+   // 5.  can also set the material reflective properties
+   // (front refers to visible polygons)
+   glMaterialfv (GL_FRONT, GL_AMBIENT, ambientmaterial);
+   glMaterialfv (GL_FRONT, GL_DIFFUSE, diffusematerial);
+   glMaterialfv (GL_FRONT, GL_SPECULAR, specularmaterial);
+   glMaterialfv (GL_FRONT, GL_SHININESS, shininessmaterial);
+
+   // 6.  turn lighting on!
+   glEnable (GL_LIGHTING);
+
+   // 7.  tell OpenGL to use your lighting and material definitions
+   glEnable (GL_LIGHT0);
+   glEnable (GL_COLOR_MATERIAL);
    glClearColor (0.0, 0.0, 0.0, 0.0);
    glShadeModel (GL_FLAT);
 }
@@ -212,34 +266,31 @@ void keyboard (unsigned char key, int x, int y)
       case '8': // rotate grid about the x axis in a clockwise direction
           rotateX = 1;
           ROT_INCRX = ROT_INCRX - 5;
-          glutPostRedisplay ();
         break;
       case '2': // rotate grid about x axis in a counter clockwise direction
         rotateX = 1;
         ROT_INCRX = ROT_INCRX + 5;
-        glutPostRedisplay ();
         break;
       case '4': // rotate grid about y axis in a clockwise direction
         rotateY = 1;
         ROT_INCRY = ROT_INCRY - 5;
-        glutPostRedisplay ();
         break;
       case '6': // rotate grid about y axis in a counter clockwise direction
         rotateY = 1;
         ROT_INCRY = ROT_INCRY + 5;
-        glutPostRedisplay ();
         break;
       case '1': // zoom in
+        cout << "Zooming In" << endl;
         z = z - .5;
-        glutPostRedisplay ();
         break;
       case '7': // zoom out
+        cout << "Zooming Out" << endl;
         z = z + .5;
-        glutPostRedisplay ();
         break;
       case 'q': cout << "Exit Program" << endl;
       exit (1);
    }
+   glutPostRedisplay();
 }
 
 

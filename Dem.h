@@ -38,7 +38,7 @@ public:
     Dem();
     void inputFile(ifstream& myfile);
     void randomMidpointDisplacement();
-    void drawTriangulation();
+    void drawTriangulation(float windowWidth, float windowHeight, float rotateX, float rotateY, float rotateZ, float anglex, float angley, float anglez);
     void calculateNormals();
     void triangulateDEM(vector<Point> allPoints);
 	Dem(int cols, int rows, float xcorn, float ycorn, float size);
@@ -48,6 +48,7 @@ public:
 	float getXcorn();
 	float getYcorn();
 	float getCellSize();
+	void calculatePoints(float windowWidth, float windowHeight, float rotateX, float rotateY, float rotateZ, float anglex, float angley, float anglez);
 	void drawDEM(float windowWidth, float windowHeight, float rotateX, float rotateY, float rotateZ, int increase, int decrease, float anglex, float angley, float anglez );
 	void drawLinearSpline(float windowWidth, float windowHeight, bool rotateX, bool rotateY, bool rotateZ, int increase, int decrease, float anglex, float angley, float anglez);
 	void drawQuadraticSpline(float windowWidth, float windowHeight, bool rotateX, bool rotateY, bool rotateZ, int increase, int decrease, float anglex, float angley, float anglez);

@@ -15,7 +15,7 @@
 
 vector <Point> currentDEM;
 
-
+float avgSlope = 0;
 
 using namespace std;
 Dem::Dem(ifstream& myfile)
@@ -130,7 +130,8 @@ void Dem:: inputFile(ifstream& myfile){
 	// create new list with correct size, input values from file 
 	// into list
 	elevationValues = new float[sizeof(float)*max];
-	maxValue = minValue = elevationValues[0];
+	maxValue = 0;
+	minValue = 99999;
 	for (long i = 0; i < max; i++)
 	{
 		elevationValues[i] = variable;
@@ -168,7 +169,23 @@ Dem :: Dem(int cols, int rows, float xcorn, float ycorn, float size){
 	float elevations[arraySize];
 }
 
-void Dem::drawTriangulation(){
+void Dem::drawTriangulation(float windowWidth, float windowHeight, float rotateX, float rotateY, float rotateZ, float anglex, float angley, float anglez){
+	glRotatef(anglex, rotateX, 0, 0);
+	glRotatef(angley, 0, rotateY, 0);
+	glRotatef(anglez, 0, 0, rotateZ);
+	glScalef(scalex, scaley, scalez);
+
+	glEnable(GL_NORMALIZE);
+	float treeLineCutOff;
+	cout << "maxValue " << maxValue << " minValue " << minValue << endl;
+	float x = maxValue - minValue;
+	cout << "maxValue - minValue " << x << endl;
+	treeLineCutOff =(x*75)/100;
+	cout << "x " << x << endl;
+	//treeLineCutOff = maxValue-x;
+	cout << "treeLineCutOff " << treeLineCutOff << endl;
+	avgSlope = avgSlope / triangulation.size();
+
 	for (int i = 0; i < triangulation.size(); i++){
 		glBegin(GL_TRIANGLE_STRIP);
 			float x1 = triangulation.at(i).get1X();
@@ -180,7 +197,23 @@ void Dem::drawTriangulation(){
 			float z1 = triangulation.at(i).get1Z();
 			float z2 = triangulation.at(i).get2Z();
 			float z3 = triangulation.at(i).get3Z();
+			float avgZ = (triangulation.at(i).get1Z()+triangulation.at(i).get2Z()+triangulation.at(i).get3Z())/3;
+			float slope = triangulation.at(i).get1Z()-triangulation.at(i).get2Z()-triangulation.at(i).get3Z();
 
+			if (avgZ >=treeLineCutOff){
+				glColor3f(1.0,1.0,1.0); // above tree line is white
+				cout << "WHITE" << endl;
+			}else{
+				glColor3f(0.2,0.6,0.2); // below tree line is green
+				cout << "GREEN" << endl;
+			}
+			if (slope == 0) {
+				glColor3f(0.0,0.8,1.0); // no slope is blue
+				cout << "BLUE" << endl;
+			} else if(slope > avgSlope){
+				cout << "GRAY" << endl;
+				glColor3f(0.2,0.2,0.2); // steep slope gray
+			}
 			glNormal3f(normals.at(i).getX(), normals.at(i).getY(), normals.at(i).getZ());
 			glVertex3f(x1, y1, z1);
 			glVertex3f(x2, y2, z2);
@@ -201,25 +234,89 @@ void Dem::calculateNormals(){
 		float z1 = triangulation.at(i).get1Z();
 		float z2 = triangulation.at(i).get2Z();
 		float z3 = triangulation.at(i).get3Z();
-
+		avgSlope += triangulation.at(i).get1Z()-triangulation.at(i).get2Z()-triangulation.at(i).get3Z();
 		Point v1(x2-x1, y2-y1, z2-z1);
 		Point v2(x3-x1, y3-y1, z3-z1);
 		Point surfaceNorm((y1*z2)-(z1*y2), (z1*x2)-(x1*z2), (x1*y2)-(y1*x2));
 		normals.push_back(surfaceNorm);
 	}
+	cout << "NORMALS SIZE " << normals.size() << endl;
 }
 void Dem::triangulateDEM(vector<Point> allPoints){
 	triangulation.clear();
-	for (int i = 0; i < nrows; i++){
-		for (int j = 0; j<ncols; j++){
+	//cout << "Begin triangulation" << endl;
+	for (int i = 0; i < nrows-1; i++){
+		for (int j = 0; j<ncols-1; j++){
+			//cout << "POINT 1: " << (i*ncols)+j << endl;
+			cout << currentDEM.at((i*ncols)+j).getX() << " " << currentDEM.at((i*ncols)+j).getY() << " " << currentDEM.at((i*ncols)+j).getZ() << endl;
+			//cout << "POINT 2: " << (i*ncols)+j+1 << endl;
+			cout << currentDEM.at((i*ncols)+j+1).getX() << " " << currentDEM.at((i*ncols)+j+1).getY() << " " << currentDEM.at((i*ncols)+j+1).getZ() << endl;
+			//cout << "POINT 3: " << ((i+1)*ncols)+j+1 << endl;
+			cout << currentDEM.at(((i+1)*ncols)+j+1).getX() << " " << currentDEM.at(((i+1)*ncols)+j+1).getY() << " " << currentDEM.at(((i+1)*ncols)+j+1).getZ() << endl;
 			Point p1 = currentDEM.at((i*ncols)+j);
 			Point p2 = currentDEM.at((i*ncols)+j+1);
 			Point p3 = currentDEM.at(((i+1)*ncols)+j+1);
 			Triangle newTri(p1, p2, p3);
+			newTri.printTriangle();
 			triangulation.push_back(newTri);
 		}
 	}
+
+	for (int i = 0; i < nrows-1; i++){
+		for (int j = 0; j<ncols-1; j++){
+			/*cout << "POINT 1: " << (i*ncols)+j << endl;
+			cout << "POINT 2: " << ((i+1)*ncols)+j+1 << endl;
+			cout << "POINT 3: " << ((i+1)*ncols)+j << endl;*/
+			Point p1 = currentDEM.at((i*ncols)+j);
+			Point p2 = currentDEM.at(((i+1)*ncols)+j+1);
+			Point p3 = currentDEM.at(((i+1)*ncols)+j);
+			Triangle newTri(p1, p2, p3);
+			triangulation.push_back(newTri);
+		}
+	}
+	calculateNormals();
 	
+}
+
+void Dem::calculatePoints(float windowWidth, float windowHeight, float rotateX, float rotateY, float rotateZ, float anglex, float angley, float anglez){
+	float* tempPointer = elevationValues;
+	currentDEM.clear();
+	//glRotatef(angle, rotateX, rotateY, rotateZ);
+	glRotatef(anglex, rotateX, 0, 0);
+	glRotatef(angley, 0, rotateY, 0);
+	glRotatef(anglez, 0, 0, rotateZ);
+	glScalef(scalex, scaley, scalez);
+
+	float xspace = ncols * cellsize;
+	float zspace = nrows * cellsize;
+
+	float startx = -(xspace / 2);
+	float startz = -(zspace / 2);
+	
+	float tempcell;
+	tempcell = this->cellsize;
+
+	tempPointer = elevationValues;
+	for (int i = 0; i < nrows; i++) {
+		for (int j = 0; j < ncols; j++){
+			float yvalue = (*tempPointer);
+			Point newPoint(startx, yvalue,startz);
+			cout << "Adding Point " << startx << " " << yvalue << " " << startz << endl;
+			currentDEM.push_back(newPoint);
+			startx = startx +tempcell;//-windowWidth/2;// tempcell;
+			tempPointer++;
+		}
+		startz = startz + tempcell;
+		startx = -(xspace /2);// -windowWidth/2-500;  //this->xllcorner;
+	}
+/*
+	cout << "CALCULATED POINTS " << endl;
+	cout << "SIZE: " << currentDEM.size() << endl;
+	for (int p = 0; p <currentDEM.size(); p++){
+		cout << "NUMBER: " << p << endl;
+		cout << currentDEM.at(p).getX() << " " << currentDEM.at(p).getY() << " " << currentDEM.at(p).getZ() << endl;
+	}*/
+	triangulateDEM(currentDEM);
 }
 void Dem:: drawDEM(float windowWidth, float windowHeight, float rotateX, float rotateY, float rotateZ, int increase, int decrease, float anglex, float angley, float anglez ) {
 	float* tempPointer = elevationValues;
@@ -252,8 +349,10 @@ void Dem:: drawDEM(float windowWidth, float windowHeight, float rotateX, float r
 			RB = 1-(*tempPointer)/maxValue;
 			glColor3f(RB, 1.0f, RB);
 			glVertex3f(startx, yvalue, startz);
-			Point newPoint(startx, yvalue,startz);
-			currentDEM.push_back(newPoint);
+			cout << "drawDEM" << endl;
+			cout << startx << " " << yvalue << " " << startz << endl;
+			//Point newPoint(startx, yvalue,startz);
+			//currentDEM.push_back(newPoint);
 			startx = startx +tempcell;//-windowWidth/2;// tempcell;
 			tempPointer++;
 		}

@@ -15,14 +15,14 @@ Triangle::Triangle(Point uno, Point dos, Point tres){
 	z = uno.getZ();
 	one.setVs(x,y,z);
 
-	x = two.getX();
-	y = two.getY();
-	z = two.getZ();
+	x = dos.getX();
+	y = dos.getY();
+	z = dos.getZ();
 	two.setVs(x,y,z);
 
-	x = three.getX();
-	y = three.getY();
-	z = three.getZ();
+	x = tres.getX();
+	y = tres.getY();
+	z = tres.getZ();
 	three.setVs(x,y,z);
 }
 
@@ -60,4 +60,14 @@ float Triangle::get2Z(){
 
 float Triangle::get3Z(){
 	return three.getZ();
+}
+
+void Triangle::printTriangle(){
+	cout << "VERTEX 1" << endl;
+	cout << one.getX() << " " << one.getY() << " " << one.getZ() << endl;
+	cout << "VERTEX 2" << endl;
+	cout << two.getX() << " " << two.getY() << " " << two.getZ() << endl;
+	cout << "VERTEX 3" << endl;
+	cout << three.getX() << " " << three.getY() << " " << three.getZ() << endl;
+
 }

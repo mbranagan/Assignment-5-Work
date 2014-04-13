@@ -36,4 +36,5 @@ public:
 	float get1Z();
 	float get2Z();
 	float get3Z();
+	void printTriangle();
 };
