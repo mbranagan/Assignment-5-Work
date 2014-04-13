@@ -63,46 +63,108 @@ Dem:: Dem(){
 	this->ncols = 0;
 }
 
-void Dem::randomMidpointDisplacement(){
-	int width = 9;
-	int height = 9;
-	float elevationValues2[9][9] = {0};
-	float a, b, c, d;
-
-	ncols = width;
-	nrows = height;
+void Dem::generateRandomDEM(int size, float rough, string output, float a, float b, float c, float d){
+	ncols = size;
+	nrows = size;
+	xllcorner = 0;
+	yllcorner = 0;
+	cellsize = 10;
 	long max = ncols * nrows;
 
-	cellsize = 10;
-	a = elevationValues2[0][0] = 100; // a
-	b = elevationValues2[width][height] = 500; // d
-	c = elevationValues2[0][height] = 100; // c
-	d = elevationValues2[width][0] = 400; // b
-
-	cout << a << " " << b << " " << c << " " << d << endl;
-	float roughness;
-	//cout << "Enter a roughness factor: ";
-	//cin >> roughness;
-
-	int tempw = (width-1)/2;
-	int temph = (height-1)/2;
-
-	for (int i = 0; i < 3; i++){
-		//float g = sqrt( - 2 log(x1) ) cos( 2 pi x2 )
-		float R = 0;//roughness*cellsize*
-		elevationValues2[tempw][temph] = ((a+b+c+d)/4) + R;
-		cout << elevationValues2[tempw][temph] << endl;
-		tempw = (tempw)/2;
-		temph = (tempw)/2;
-		b = b+50;
-		c = c+25;
-	}
-	
+	maxValue = 0;
+	minValue = 99999;
 	elevationValues = new float[sizeof(float)*max];
+	for (long i = 0; i < max; i++)
+	{
+		elevationValues[i] = -1;		
+	}
+	if (nrows > ncols){
+		float xspace = nrows*cellsize;
+
+		scalex = scalez = SCALE_FACTOR/xspace; //(nrows * 1);//285555.5556);
+	}else{
+		float xspace = ncols*cellsize;
+		scalex = scalez = SCALE_FACTOR/xspace;//(nrows * 1);// 285555.5556);
+	}
+	scaley = SCALEY_FACTOR/maxValue;
+
+	cout << "a " << a << " b " << b << " c " << c << " d " << d << endl;
+	cout << "loc1 " << 0 << " loc2 " << ncols-1 << " loc3 " << max-ncols << " loc4 " << max-1 << endl;
+	elevationValues[0] = a;
+	elevationValues[ncols-1] = b;
+	elevationValues[max-ncols] = c;
+	elevationValues[max-1] = d;
+	randomMidpointDisplacement(a, b, c, d, 0, ncols-1, max-ncols, max-1, rough);
+
+ 	ofstream myfile;
+  	myfile.open (output);
+  	maxValue = 0;
+  	minValue = 99999;
+  	
+	myfile << "ncols " << ncols << endl;
+	myfile << "nrows " << nrows << endl;
+	myfile << "xllcorner " << 0 << endl;
+	myfile << "yllcorner " << 0 << endl;
+	myfile << "cellsize " << 10 << endl;
 	for (int j = 0; j < max; j++){
-		for (int k = 0; k < max; k++){
-			elevationValues[(j*max)+k] = elevationValues2[j][k];
+		//assert(elevationValues[j] != -1);
+		if (elevationValues[j] == -1){
+			elevationValues[j] = 30;
 		}
+		if (elevationValues[j] < minValue)
+			minValue = elevationValues[j];
+		if (elevationValues[j] > maxValue)
+			maxValue = elevationValues[j];
+	    myfile << elevationValues[j] << " ";
+	}
+	myfile.close();
+}
+void Dem::randomMidpointDisplacement(float a, float b, float c, float d, int loc1, int loc2, int loc3, int loc4, float rough){
+	// calculate gaussion random value
+	float x, y,s;
+
+	x = (static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/2)))-1;
+	y = (static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/2)))-1;
+	s = (x*x) + (y*y);
+	while (s >= 1){
+		x = (static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/2)))-1;
+		y = (static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/2)))-1;
+		s = (x*x) + (y*y);
+	}
+	assert(s < 1);
+	s = x*(sqrt((-2*log(s))/s));
+	float R = rough * (this->cellsize) * s;
+	float e = ((a + b + c + d)/4) + R;
+	int newLoc = (loc1+loc2+loc3+loc4)/4;
+	assert(newLoc != 0);
+	cout << " newLoc " << newLoc << endl;
+	elevationValues[newLoc] = e;
+	if ((newLoc-loc1) == (ncols+1)){
+		cout << "finished" << endl;
+	}else{
+		int loc2a = loc1 + ((loc2 - loc1) / 2);
+		int loc3a = loc1 + ((loc3 - loc1) / 2);
+		if (elevationValues[loc2a] == -1)
+			elevationValues[loc2a] = b;
+		if (elevationValues[loc3a] == -1)
+			elevationValues[loc3a] = c;
+		// top left square
+		randomMidpointDisplacement(a, elevationValues[loc2a], elevationValues[loc3a], e, loc1, loc2a, loc3a, newLoc, rough);
+
+		// top right square
+		int loc4a = loc2 + ((loc4 - loc2)/2);	
+		if (elevationValues[loc4a] == -1)
+			elevationValues[loc4a] = d;
+		randomMidpointDisplacement(elevationValues[loc2a], b, e, elevationValues[loc4a], loc2a, loc2, newLoc, loc4a, rough);
+
+		// bottom left square
+		int loc4b = loc3 +((loc4 - loc3)/2);
+		if (elevationValues[loc4b] == -1)
+			elevationValues[loc4b] = d;
+		randomMidpointDisplacement(elevationValues[loc3a], e, c, elevationValues[loc4b], loc3a, newLoc, loc3, loc4b, rough);
+
+		// bottom right square
+		randomMidpointDisplacement(e, elevationValues[loc4a], elevationValues[loc4b], d, newLoc, loc4a, loc4b, loc4, rough);
 	}
 
 }

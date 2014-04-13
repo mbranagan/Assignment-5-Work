@@ -69,7 +69,9 @@ bool inputFile(){
   //input file names and sorting method
   cout << "Please type the name of the file holding the DEM you would like to use. If you would like to generate a DEM press 'g'" << endl;
  // getline(cin, fileName);
-   fileName = "testfile.txt";
+ // fileName = "testfile.txt";
+  fileName = "g";
+  //fileName = "testOutput.grd";
   if (fileName != "g"){
   
     myfile.open (fileName.c_str());
@@ -81,6 +83,30 @@ bool inputFile(){
    // CurrentValues.drawDEM(WINDOW_WIDTH, WINDOW_HEIGHT, rotateX, rotateY, rotateZ, increseGrid, decreaseGrid, ROT_INCRX, ROT_INCRY, ROT_INCRZ);
     return true;
   } else {
+    int size;
+    float rough;
+    float a,b,c,d;
+    string output = ""; 
+   /* cout << "Enter the number of rows (=the number of columns): ";
+    cin >> size;
+    cout << "Enter the roughness level: ";
+    cin >> rough;
+    cout << "Where would you like to put this file? ";
+    cin >> output;
+    cout << "Please enter the four starting elevations: ";
+    cin >> a >> b >> c >> d;*/
+    //defaults for testing
+    size = 5;
+    rough = 0;
+    output = "testOutput.grd";
+    a = 20;
+    b = 10;
+    c = 50;
+    d = 15;
+    CurrentValues.generateRandomDEM(size, rough, output, a, b, c, d);
+    myfile.open (output.c_str());
+    assert( myfile.is_open() );
+    CurrentValues.inputFile(myfile);
     return false;
   }
 }
@@ -97,13 +123,13 @@ void display ()
     bool isThereInput;
     isThereInput =inputFile();
 
-    if (isThereInput){
+    //if (isThereInput){
       CurrentValues.calculatePoints(WINDOW_WIDTH, WINDOW_HEIGHT, rotateX, rotateY, rotateZ, ROT_INCRX, ROT_INCRY, ROT_INCRZ);
       CurrentValues.drawTriangulation(WINDOW_WIDTH, WINDOW_HEIGHT, rotateX, rotateY, rotateZ, ROT_INCRX, ROT_INCRY, ROT_INCRZ);
       glutPostRedisplay();
-    } else {
+    //} else {
 
-    }
+    //}
     input = true;
   }
   else {
