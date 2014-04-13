@@ -49,7 +49,7 @@ bool quadraticSpline = false;
 int increseGrid = 2;
 int decreaseGrid = 0;
 int gridCounter = 0;
-int smooth = 0; // smooth shading is off = flat shading
+int smooth = 1; // smooth shading is off = flat shading
 int lighting = 1; // lighting default is on
 void displayInstructions(){
   cout << "All points are being displayed." << endl;
@@ -69,7 +69,7 @@ bool inputFile(){
   //input file names and sorting method
   cout << "Please type the name of the file holding the DEM you would like to use. If you would like to generate a DEM press 'g'" << endl;
  // getline(cin, fileName);
-   fileName = "testfile2.txt";
+   fileName = "testfile.txt";
   if (fileName != "g"){
   
     myfile.open (fileName.c_str());
