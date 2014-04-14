@@ -32,6 +32,7 @@ private:
 	float scaley;
 	vector<Triangle> triangulation;
 	vector<Point> normals;
+	vector<Point> vertexNormals;
 	
 public:
     Dem(ifstream& myfile);
@@ -40,6 +41,7 @@ public:
     void inputFile(ifstream& myfile);
     void randomMidpointDisplacement(float a, float b, float c, float d, int loc1, int loc2, int loc3, int loc4, float rough);
     void drawTriangulation(float windowWidth, float windowHeight, float rotateX, float rotateY, float rotateZ, float anglex, float angley, float anglez);
+    void calculateVertexNormals();
     void calculateNormals();
     void triangulateDEM(vector<Point> allPoints);
 	Dem(int cols, int rows, float xcorn, float ycorn, float size);

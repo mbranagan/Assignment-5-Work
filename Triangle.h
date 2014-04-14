@@ -23,6 +23,7 @@ private:
 	Point one;
 	Point two;
 	Point three;
+	float slope;
 	
 public:
 	Triangle(Point x, Point y, Point z);
@@ -36,5 +37,8 @@ public:
 	float get1Z();
 	float get2Z();
 	float get3Z();
+	float getSlope();
 	void printTriangle();
+	void calculateSlope();
+
 };

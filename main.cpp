@@ -69,7 +69,7 @@ bool inputFile(){
   //input file names and sorting method
   cout << "Please type the name of the file holding the DEM you would like to use. If you would like to generate a DEM press 'g'" << endl;
  // getline(cin, fileName);
- // fileName = "testfile.txt";
+  //fileName = "testfile.txt";
   fileName = "g";
   //fileName = "testOutput.grd";
   if (fileName != "g"){
@@ -96,13 +96,13 @@ bool inputFile(){
     cout << "Please enter the four starting elevations: ";
     cin >> a >> b >> c >> d;*/
     //defaults for testing
-    size = 5;
-    rough = 0;
+    size = 257;
+    rough = 1;
     output = "testOutput.grd";
-    a = 20;
-    b = 10;
+    a = 500;
+    b = 275;
     c = 50;
-    d = 15;
+    d = 300;
     CurrentValues.generateRandomDEM(size, rough, output, a, b, c, d);
     myfile.open (output.c_str());
     assert( myfile.is_open() );
@@ -246,8 +246,8 @@ void init ()
    glEnable (GL_DEPTH_TEST);
 
    // 2.  set flat or smooth shading; can be changed via menu
-   glShadeModel (GL_FLAT);
-   //glShadeModel (GL_SMOOTH);
+   //glShadeModel (GL_FLAT);
+   glShadeModel (GL_SMOOTH);
 
    // 3.  set up light properties using definitions above
    glLightfv (GL_LIGHT0, GL_POSITION, light0_pos);  // light0 has position light0_pos

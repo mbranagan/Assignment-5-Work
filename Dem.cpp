@@ -107,7 +107,8 @@ void Dem::generateRandomDEM(int size, float rough, string output, float a, float
 	myfile << "yllcorner " << 0 << endl;
 	myfile << "cellsize " << 10 << endl;
 	for (int j = 0; j < max; j++){
-		//assert(elevationValues[j] != -1);
+		cout << j << " " << elevationValues[j] << endl;
+		assert(elevationValues[j] != -1);
 		if (elevationValues[j] == -1){
 			elevationValues[j] = 30;
 		}
@@ -122,7 +123,8 @@ void Dem::generateRandomDEM(int size, float rough, string output, float a, float
 void Dem::randomMidpointDisplacement(float a, float b, float c, float d, int loc1, int loc2, int loc3, int loc4, float rough){
 	// calculate gaussion random value
 	float x, y,s;
-
+	float tempcell;
+	tempcell = (this->cellsize*(loc2-loc1))+10;
 	x = (static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/2)))-1;
 	y = (static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/2)))-1;
 	s = (x*x) + (y*y);
@@ -133,34 +135,49 @@ void Dem::randomMidpointDisplacement(float a, float b, float c, float d, int loc
 	}
 	assert(s < 1);
 	s = x*(sqrt((-2*log(s))/s));
-	float R = rough * (this->cellsize) * s;
+	float R = rough * tempcell * s;
+	cout << "tempcell " << tempcell << endl;
 	float e = ((a + b + c + d)/4) + R;
 	int newLoc = (loc1+loc2+loc3+loc4)/4;
 	assert(newLoc != 0);
 	cout << " newLoc " << newLoc << endl;
 	elevationValues[newLoc] = e;
 	if ((newLoc-loc1) == (ncols+1)){
+		if (elevationValues[loc2-1] == -1){
+			elevationValues[loc2-1] = (a+b)/2;
+		}
+		if (elevationValues[loc4-1] == -1){
+			elevationValues[loc4-1] = (d+c)/2;
+			cout << "loc4-1 " << loc4-1 << endl;
+		}
+		if (elevationValues[loc3-ncols] == -1){
+			elevationValues[loc3-ncols] = (a+c)/2;
+			//cout << "loc3-ncols " << loc3-ncols << endl;
+		}
+		if (elevationValues[(loc3-ncols)+2] == -1){
+			elevationValues[(loc3-ncols)+2] = (b+d)/2;
+		}
 		cout << "finished" << endl;
 	}else{
 		int loc2a = loc1 + ((loc2 - loc1) / 2);
 		int loc3a = loc1 + ((loc3 - loc1) / 2);
 		if (elevationValues[loc2a] == -1)
-			elevationValues[loc2a] = b;
+			elevationValues[loc2a] = (a+b)/2;
 		if (elevationValues[loc3a] == -1)
-			elevationValues[loc3a] = c;
+			elevationValues[loc3a] = (a+c)/2;
 		// top left square
 		randomMidpointDisplacement(a, elevationValues[loc2a], elevationValues[loc3a], e, loc1, loc2a, loc3a, newLoc, rough);
 
 		// top right square
 		int loc4a = loc2 + ((loc4 - loc2)/2);	
 		if (elevationValues[loc4a] == -1)
-			elevationValues[loc4a] = d;
+			elevationValues[loc4a] = (d+b)/2;
 		randomMidpointDisplacement(elevationValues[loc2a], b, e, elevationValues[loc4a], loc2a, loc2, newLoc, loc4a, rough);
 
 		// bottom left square
 		int loc4b = loc3 +((loc4 - loc3)/2);
 		if (elevationValues[loc4b] == -1)
-			elevationValues[loc4b] = d;
+			elevationValues[loc4b] = (c+d)/2;
 		randomMidpointDisplacement(elevationValues[loc3a], e, c, elevationValues[loc4b], loc3a, newLoc, loc3, loc4b, rough);
 
 		// bottom right square
@@ -272,7 +289,7 @@ void Dem::drawTriangulation(float windowWidth, float windowHeight, float rotateX
 				highestPoint = y3;
 			else if(y3 < lowestPoint)
 				lowestPoint = y3;
-			float slope = highestPoint - lowestPoint;
+			float slope = triangulation.at(i).getSlope();
 			bool slopeColor = false;
 			
 			//cout << "slope " << slope << endl;
@@ -309,7 +326,36 @@ void Dem::drawTriangulation(float windowWidth, float windowHeight, float rotateX
 		glEnd();
 	}
 }
+void Dem::calculateVertexNormals(){
+	vertexNormals.clear();
 
+	// initialize vector data structure
+	for (int i = 0; i < (triangulation.size()*3); i++){
+		Point p1(-1,-1,-1);
+		vertexNormals.push_back(p1);
+	}
+
+	// bottom right & top left corner vertices are based only on one surface normal
+	int singleCorners[2] = {(ncols-1)*3, (triangulation.size()-(ncols-2))};
+	for (int j = 0; j < sizeof(singleCorners); j++){
+		vertexNormals.at(singleCorners[j]) = normals.at(singleCorners[j]);
+	}
+
+	// bottom left & top right corner vertices are based only on two surface normals
+	int doubleCorners[4] = {0, ((triangulation.size()/2)*3)+1, (((triangulation.size()-1)/2)*3), (triangulation.size()*3)-1};	
+	vertexNormals.at(doubleCorners[0]) = vertexNormals.at(doubleCorners[1]) = normals.at(doubleCorners[0]).average(normals.at(doubleCorners[1]));
+	vertexNormals.at(doubleCorners[2]) = vertexNormals.at(doubleCorners[3]) = (normals.at(doubleCorners[2]).average(normals.at(doubleCorners[3])));
+
+	// fill in edges
+	//for (int m = 0; m )
+	for (int k = 0; k < triangulation.size()*3; k++){
+		if (vertexNormals.at(k).isNull()){
+			// check if an edge
+		}
+	}
+
+
+}
 void Dem::calculateNormals(){
 	normals.clear();
 	float currentSlope;
@@ -335,14 +381,6 @@ void Dem::calculateNormals(){
 			highestPoint = y3;
 		else if(y3 < lowestPoint)
 			lowestPoint = y3;
-		currentSlope = highestPoint - lowestPoint;
-		if (i == 0)
-			maxSlope = minSlope = currentSlope;
-		else if (currentSlope > maxSlope)
-			maxSlope = currentSlope;
-		else if (currentSlope < minSlope)
-			minSlope = currentSlope;
-		avgSlope += currentSlope;
 		Point v1(x2-x1, y2-y1, z2-z1);
 		Point v2(x3-x1, y3-y1, z3-z1);
 		Point surfaceNorm((y1*z2)-(z1*y2), (z1*x2)-(x1*z2), (x1*y2)-(y1*x2));
@@ -352,6 +390,9 @@ void Dem::calculateNormals(){
 void Dem::triangulateDEM(vector<Point> allPoints){
 	triangulation.clear();
 	//cout << "Begin triangulation" << endl;
+
+	maxSlope = 0;
+	minSlope = 99999;
 	for (int i = 0; i < nrows-1; i++){
 		for (int j = 0; j<ncols-1; j++){
 			//cout << "POINT 1: " << (i*ncols)+j << endl;
@@ -364,8 +405,15 @@ void Dem::triangulateDEM(vector<Point> allPoints){
 			Point p2 = currentDEM.at((i*ncols)+j+1);
 			Point p3 = currentDEM.at(((i+1)*ncols)+j+1);
 			Triangle newTri(p1, p2, p3);
+			avgSlope += newTri.getSlope();
 			//newTri.printTriangle();
 			triangulation.push_back(newTri);
+			if (newTri.getSlope() > maxSlope){
+				maxSlope = newTri.getSlope();
+			} else if (newTri.getSlope() < minSlope){
+				minSlope = newTri.getSlope();
+
+			}
 		}
 	}
 
