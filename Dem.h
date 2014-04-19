@@ -38,6 +38,7 @@ public:
     Dem(ifstream& myfile);
     Dem();
     void generateRandomDEM(int size, float rough, string output, float a, float b, float c, float d);
+    void inputFile(float rows, float cols, float xllcorner, float yllcorner, float cellsize);
     void inputFile(ifstream& myfile);
     void randomMidpointDisplacement(float a, float b, float c, float d, int loc1, int loc2, int loc3, int loc4, float rough);
     void drawTriangulation(float windowWidth, float windowHeight, float rotateX, float rotateY, float rotateZ, float anglex, float angley, float anglez);

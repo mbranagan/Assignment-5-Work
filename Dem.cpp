@@ -14,6 +14,7 @@
 #define SCALEY_FACTOR .5
 
 vector <Point> currentDEM;
+vector <Point> uiPoints;
 
 float avgSlope = 0;
 
@@ -184,6 +185,50 @@ void Dem::randomMidpointDisplacement(float a, float b, float c, float d, int loc
 		randomMidpointDisplacement(e, elevationValues[loc4a], elevationValues[loc4b], d, newLoc, loc4a, loc4b, loc4, rough);
 	}
 
+}
+void Dem:: inputFile(float rows, float cols, float xllcorner, float yllcorner, float cellsize){
+
+
+    this->ncols = rows;
+    this->nrows = cols;
+    this->xllcorner = xllcorner;
+    this->yllcorner = yllcorner;
+    this->cellsize = cellsize;
+
+    //if (nrows > ncols){
+    //	this->cellsize = 5000/nrows;
+    //} /*else {
+    	//this->cellsize = 5000/ncols;
+    //}
+	long max = ncols * nrows;
+	float variable; // temporarily represents each number in file
+	
+	// create new list with correct size, input values from file 
+	// into list
+	elevationValues = new float[sizeof(float)*max];
+	maxValue = 0;
+	minValue = 99999;
+	for (long i = 0; i < max; i++)
+	{
+		elevationValues[i] = 10;
+				if (elevationValues[i] > maxValue) {
+			maxValue = elevationValues[i];
+		} else if (elevationValues[i] < minValue)
+		{
+			minValue = elevationValues[i];	
+		}
+		
+	}
+	if (nrows > ncols){
+		float xspace = nrows*cellsize;
+
+		scalex = scalez = SCALE_FACTOR/xspace; //(nrows * 1);//285555.5556);
+	}else{
+		float xspace = ncols*cellsize;
+		scalex = scalez = SCALE_FACTOR/xspace;//(nrows * 1);// 285555.5556);
+	}
+	scaley = SCALEY_FACTOR/maxValue;
+	//scalex = scaley = scalez = ((double)ncols / 285555.5556);
 }
 void Dem:: inputFile(ifstream& myfile){
 
@@ -473,6 +518,8 @@ void Dem::calculatePoints(float windowWidth, float windowHeight, float rotateX, 
 	}*/
 	triangulateDEM(currentDEM);
 }
+
+
 void Dem:: drawDEM(float windowWidth, float windowHeight, float rotateX, float rotateY, float rotateZ, int increase, int decrease, float anglex, float angley, float anglez ) {
 	float* tempPointer = elevationValues;
 	//glRotatef(angle, rotateX, rotateY, rotateZ);
@@ -480,6 +527,7 @@ void Dem:: drawDEM(float windowWidth, float windowHeight, float rotateX, float r
 	glRotatef(angley, 0, rotateY, 0);
 	glRotatef(anglez, 0, 0, rotateZ);
 	glScalef(scalex, scaley, scalez);
+	uiPoints.clear();
 
 	float xspace = ncols * cellsize;
 	float zspace = nrows * cellsize;
@@ -497,14 +545,17 @@ void Dem:: drawDEM(float windowWidth, float windowHeight, float rotateX, float r
 	float RB = 1.0;
 	glColor3f(1.0f, 1.0f, 1.0f);
 	tempPointer = elevationValues;
-	glBegin(GL_LINE_STRIP);
+	glPointSize(5);
+	glBegin(GL_POINTS);
 	for (int i = 0; i < nrows; i++) {
 		for (int j = 0; j < ncols; j++){
 			float yvalue = (*tempPointer)*increase-(decrease*(*tempPointer));
 			RB = 1-(*tempPointer)/maxValue;
 			glColor3f(RB, 1.0f, RB);
 			glVertex3f(startx, yvalue, startz);
-
+			Point p(startx/scalex, yvalue/scaley,startz/scalez);
+			cout << "point " << startx/scalex << " " << yvalue/scaley << " " << startz/scalez << endl;
+			uiPoints.push_back(p);
 			//Point newPoint(startx, yvalue,startz);
 			//currentDEM.push_back(newPoint);
 			startx = startx +tempcell;//-windowWidth/2;// tempcell;

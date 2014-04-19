@@ -51,6 +51,8 @@ int decreaseGrid = 0;
 int gridCounter = 0;
 int smooth = 1; // smooth shading is off = flat shading
 int lighting = 1; // lighting default is on
+bool interfaceOn = false;
+
 void displayInstructions(){
   cout << "All points are being displayed." << endl;
   cout << "Press 8 to rotate the grid in a clockwise direction." << endl;
@@ -68,9 +70,9 @@ bool inputFile(){
   
   //input file names and sorting method
   cout << "Please type the name of the file holding the DEM you would like to use. If you would like to generate a DEM press 'g'" << endl;
- // getline(cin, fileName);
+  getline(cin, fileName);
   //fileName = "testfile.txt";
-  fileName = "g";
+ // fileName = "g";
   //fileName = "testOutput.grd";
   if (fileName != "g"){
   
@@ -96,17 +98,20 @@ bool inputFile(){
     cout << "Please enter the four starting elevations: ";
     cin >> a >> b >> c >> d;*/
     //defaults for testing
-    size = 257;
-    rough = 1;
+    size = 9;
+    rough = 10;
     output = "testOutput.grd";
     a = 500;
     b = 275;
     c = 50;
     d = 300;
-    CurrentValues.generateRandomDEM(size, rough, output, a, b, c, d);
+
+   /* CurrentValues.generateRandomDEM(size, rough, output, a, b, c, d);
     myfile.open (output.c_str());
     assert( myfile.is_open() );
-    CurrentValues.inputFile(myfile);
+    CurrentValues.inputFile(myfile);*/
+    CurrentValues.inputFile(size, size, 0, 0, 10);
+    interfaceOn = true;
     return false;
   }
 }
@@ -133,7 +138,18 @@ void display ()
     input = true;
   }
   else {
+    if(interfaceOn){
+      glColor3f(1,0,0);
+      glPointSize(10);
+      glBegin(GL_POINTS);
+        glVertex3f(-1,-1,0);
+        glVertex3f(-1,1,0);
+        glVertex3f(1,1,0);
+        glVertex3f(1,-1,0);
+      glEnd();
+    }else{
     CurrentValues.drawTriangulation(WINDOW_WIDTH, WINDOW_HEIGHT, rotateX, rotateY, rotateZ, ROT_INCRX, ROT_INCRY, ROT_INCRZ);
+  }
     glutSwapBuffers();
   }
 
@@ -216,6 +232,28 @@ void myMouse (int button, int state, int x, int y)
   if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
     initmenu();
     }
+  if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
+    float x1, y1;
+    x1 = x;
+    y1 = WINDOW_HEIGHT - y;
+
+    if (x1 >= 346 && x1 <= 356){
+      if (y1 >= 530 && y1 <= 540){
+        cout << "a" << endl;
+      }else if (y1 >= 305 && y1 <= 315){
+        cout << "c" << endl;
+      }
+    }
+    if (x1 >= 645 && x1 <= 655){
+      if (y1 >= 530 && y1 <= 538){
+        cout << "b" << endl;
+      } else if (y1 >= 305 && y1 <= 315){
+        cout << "d" << endl;
+      }
+    }
+    
+    cout << x << " " << WINDOW_HEIGHT -y << endl;
+  }
 }
 
 void init ()
@@ -325,7 +363,7 @@ int main (int argc, char** argv) {
    glutInitDisplayMode (GLUT_SINGLE | GLUT_RGB);
    glutInitWindowSize (WINDOW_WIDTH, WINDOW_HEIGHT); 
    glutInitWindowPosition (100, 100);
-   glutCreateWindow ("Frustum Fun");
+   glutCreateWindow ("G5");
    init ();
    glutDisplayFunc(display); 
    glutReshapeFunc (reshape);
