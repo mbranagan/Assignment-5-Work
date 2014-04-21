@@ -20,10 +20,10 @@
 #include <fstream>
 #include <string>
 #include <cassert>
-
+#include <sstream>
 #include "Dem.h"
 
-
+#include "STDLIB.h"
 #define VIEWING_DISTANCE_MIN  3.0
 #define WINDOW_WIDTH 1000
 #define WINDOW_HEIGHT 800
@@ -52,6 +52,10 @@ int gridCounter = 0;
 int smooth = 1; // smooth shading is off = flat shading
 int lighting = 1; // lighting default is on
 bool interfaceOn = false;
+float elA, elB, elC, elD = 0; 
+short on = 0; // 1 = a 2 = b 3 = c 4 = d 
+float a,b,c,d;
+float EL_INCR = 10;
 
 void displayInstructions(){
   cout << "All points are being displayed." << endl;
@@ -63,16 +67,21 @@ void displayInstructions(){
   cout << "Press 'q' to quit." << endl;
   cout << "Right click to view a pop-up menu that displays your spline options." << endl;  
 }
-
+// helper font method to create labels
+void writeBitmapString(void *font,  char *string)
+{  
+   char *c;
+   for (c = string; *c != '\0'; c++) glutBitmapCharacter(font, *c);
+}
 bool inputFile(){
   ifstream myfile;   // input stream 
   string fileName;
   
   //input file names and sorting method
   cout << "Please type the name of the file holding the DEM you would like to use. If you would like to generate a DEM press 'g'" << endl;
-  getline(cin, fileName);
+ // getline(cin, fileName);
   //fileName = "testfile.txt";
- // fileName = "g";
+  fileName = "g";
   //fileName = "testOutput.grd";
   if (fileName != "g"){
   
@@ -110,7 +119,7 @@ bool inputFile(){
     myfile.open (output.c_str());
     assert( myfile.is_open() );
     CurrentValues.inputFile(myfile);*/
-    CurrentValues.inputFile(size, size, 0, 0, 10);
+    //CurrentValues.inputFile(size, size, 0, 0, 10);
     interfaceOn = true;
     return false;
   }
@@ -139,6 +148,10 @@ void display ()
   }
   else {
     if(interfaceOn){
+      glDisable (GL_LIGHTING);
+      //glClearColor(1,1,1,0);
+
+      glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       glColor3f(1,0,0);
       glPointSize(10);
       glBegin(GL_POINTS);
@@ -147,6 +160,84 @@ void display ()
         glVertex3f(1,1,0);
         glVertex3f(1,-1,0);
       glEnd();
+        
+      glColor3f(1,1,1);
+      glRasterPos3f(-1.2, 1, 0.0); 
+      writeBitmapString(GLUT_BITMAP_HELVETICA_18, "A");
+      glRasterPos3f(-1.2, -1, 0.0); 
+      writeBitmapString(GLUT_BITMAP_HELVETICA_18, "C");
+      glRasterPos3f(0.8, 1, 0.0); 
+      writeBitmapString(GLUT_BITMAP_HELVETICA_18, "B");
+      glRasterPos3f(0.8, -1, 0.0); 
+      writeBitmapString(GLUT_BITMAP_HELVETICA_18, "D");
+
+      char* elevation = (char*)(std::to_string(elA)).c_str();
+      if (on == 1)
+        glColor3f(1,0,0);
+      else
+        glColor3f(1,1,1);
+      glRasterPos3f(-0.9, .8, 0.0); 
+      writeBitmapString(GLUT_BITMAP_HELVETICA_18, elevation);
+
+      if (on == 2)
+        glColor3f(1,0,0);
+      else
+        glColor3f(1,1,1);
+      elevation = (char*)(std::to_string(elB)).c_str();
+      glRasterPos3f(1.1, 0.8, 0.0); 
+      writeBitmapString(GLUT_BITMAP_HELVETICA_18, elevation);
+
+      if (on == 3)
+        glColor3f(1,0,0);
+      else
+        glColor3f(1,1,1);
+      elevation = (char*)(std::to_string(elC)).c_str();
+      glRasterPos3f(-0.9, -1.2, 0.0); 
+      writeBitmapString(GLUT_BITMAP_HELVETICA_18, elevation);
+
+    
+      if (on == 4)
+        glColor3f(1,0,0);
+      else
+        glColor3f(1,1,1);
+      elevation = (char*)(std::to_string(elD)).c_str();
+      glRasterPos3f(1.1, -1.2, 0.0); 
+      writeBitmapString(GLUT_BITMAP_HELVETICA_18, elevation);
+
+      glColor3f(0.8,0.2,0);
+      glRectf(-0.5,-1.8, 0.5,-2);
+      glColor3f(0,0,0);
+      glRasterPos3f(-0.17, -1.9, 0.0); 
+      writeBitmapString(GLUT_BITMAP_TIMES_ROMAN_10, "FINISHED!"); 
+
+
+      if (EL_INCR == 10)
+        glColor3f(0.8,0.4,0.0);
+      else
+        glColor3f(0.8,0.2,0);
+      glRectf(2.0,0.0, 2.8,0.2);
+      glColor3f(0,0,0);
+      glRasterPos3f(2.1, 0.08, 0.0); 
+      writeBitmapString(GLUT_BITMAP_TIMES_ROMAN_10, "INCREMENT BY 10"); 
+
+      if (EL_INCR == 1)
+        glColor3f(0.8,0.4,0.0);
+      else
+        glColor3f(0.8,0.2,0);
+      glRectf(2.0,0.4, 2.8,0.6);
+      glColor3f(0,0,0);
+      glRasterPos3f(2.1, 0.48, 0.0); 
+      writeBitmapString(GLUT_BITMAP_TIMES_ROMAN_10, "INCREMENT BY 1"); 
+
+      if (EL_INCR == 0.1)
+        glColor3f(0.8,0.4,0.0);
+      else
+        glColor3f(0.8,0.2,0);
+      glRectf(2.0,0.8, 2.8,1.0);
+      glColor3f(0,0,0);
+      glRasterPos3f(2.1, 0.88, 0.0); 
+      writeBitmapString(GLUT_BITMAP_TIMES_ROMAN_10, "INCREMENT BY 0.1"); 
+
     }else{
     CurrentValues.drawTriangulation(WINDOW_WIDTH, WINDOW_HEIGHT, rotateX, rotateY, rotateZ, ROT_INCRX, ROT_INCRY, ROT_INCRZ);
   }
@@ -238,22 +329,48 @@ void myMouse (int button, int state, int x, int y)
     y1 = WINDOW_HEIGHT - y;
 
     if (x1 >= 346 && x1 <= 356){
-      if (y1 >= 530 && y1 <= 540){
-        cout << "a" << endl;
-      }else if (y1 >= 305 && y1 <= 315){
-        cout << "c" << endl;
+      if (y1 >= 530 && y1 <= 540){ // a
+        on =1;
+      }else if (y1 >= 305 && y1 <= 315){ // c
+        on = 3; 
       }
     }
     if (x1 >= 645 && x1 <= 655){
-      if (y1 >= 530 && y1 <= 538){
-        cout << "b" << endl;
-      } else if (y1 >= 305 && y1 <= 315){
-        cout << "d" << endl;
+      if (y1 >= 530 && y1 <= 538){ // b 
+        on = 2;
+      } else if (y1 >= 305 && y1 <= 315){ // d
+        on = 4;
       }
     }
-    
-    cout << x << " " << WINDOW_HEIGHT -y << endl;
+    // check if finished
+    if (x1 >=427 && x1 <=573 && y1 >= 196 && y1 <= 217){
+      glEnable (GL_LIGHTING);
+      cout << "finished " << endl;
+      int size = 257;
+      int rough = 10;
+      string output = "testOutput.grd";
+      ifstream myfile;
+      interfaceOn = false;
+      cout << "Your final corner elevations are " << elA << " " << elB << " " << elC << " " << elD << endl;
+      CurrentValues.generateRandomDEM(size, rough, output, elA, elB, elC, elD);
+      myfile.open (output.c_str());
+      assert( myfile.is_open() );
+      CurrentValues.inputFile(myfile);
+      CurrentValues.calculatePoints(WINDOW_WIDTH, WINDOW_HEIGHT, rotateX, rotateY, rotateZ, ROT_INCRX, ROT_INCRY, ROT_INCRZ);
+    }
+    // check increment buttons
+    if (x1 >= 801 && x1 <= 919){
+      if (y1 >=514 && y1 <= 533){ // top button
+        EL_INCR = 0.1;
+      } else if (y1 >= 469 && y1 <= 488){
+        EL_INCR = 1;
+      } else if (y1 >= 424 && y1 <= 443){
+        EL_INCR = 10;
+      }
+    }
   }
+  //cout << x << " " << WINDOW_HEIGHT-y << endl;
+  glutPostRedisplay();
 }
 
 void init ()
@@ -350,6 +467,32 @@ void keyboard (unsigned char key, int x, int y)
       case '7': // zoom out
         cout << "Zooming Out" << endl;
         z = z + .5;
+        break;
+      case 'o':
+        if (on == 1){
+          elA += EL_INCR;
+        }else if (on == 2){
+          elB += EL_INCR;
+        } else if (on == 3){
+          elC += EL_INCR;
+        } else if (on ==4){
+          elD += EL_INCR;
+        }
+        break;
+      case 'p':
+        if (on == 1){
+          if (elA != 0)
+            elA -= EL_INCR;
+        }else if (on == 2){
+          if (elB != 0)
+            elB -= EL_INCR;
+        } else if (on == 3){
+          if (elC != 0)
+            elC -= EL_INCR;
+        } else if (on ==4){
+          if (elD != 0)
+            elD -= EL_INCR;
+        }
         break;
       case 'q': cout << "Exit Program" << endl;
       exit (1);
