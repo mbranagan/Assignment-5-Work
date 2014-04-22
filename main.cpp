@@ -56,16 +56,24 @@ float elA, elB, elC, elD = 0;
 short on = 0; // 1 = a 2 = b 3 = c 4 = d 
 float a,b,c,d;
 float EL_INCR = 10;
+bool water = false;
+bool waterA = false;
+bool waterB = false;
+bool waterC = false;
+bool waterD = false;
+int size;
+string output = "";
+float rough;
+
 
 void displayInstructions(){
-  cout << "All points are being displayed." << endl;
+  cout << "DEM is being displayed." << endl;
   cout << "Press 8 to rotate the grid in a clockwise direction." << endl;
   cout << "Press 6 to rotate the grid about the x axis in a counter clockwise direction." << endl;
   cout << "Press 4 to rotate the grid about the y axis in a clockwise direction." << endl;
   cout << "Press 2 to rotate the grid about the y axis in a counter clockwise direction." << endl;
   cout << "Press 1 to zoom in or Press 7 to zoom out." << endl;
   cout << "Press 'q' to quit." << endl;
-  cout << "Right click to view a pop-up menu that displays your spline options." << endl;  
 }
 // helper font method to create labels
 void writeBitmapString(void *font,  char *string)
@@ -79,9 +87,9 @@ bool inputFile(){
   
   //input file names and sorting method
   cout << "Please type the name of the file holding the DEM you would like to use. If you would like to generate a DEM press 'g'" << endl;
- // getline(cin, fileName);
+  getline(cin, fileName);
   //fileName = "testfile.txt";
-  fileName = "g";
+  //fileName = "g";
   //fileName = "testOutput.grd";
   if (fileName != "g"){
   
@@ -94,26 +102,32 @@ bool inputFile(){
    // CurrentValues.drawDEM(WINDOW_WIDTH, WINDOW_HEIGHT, rotateX, rotateY, rotateZ, increseGrid, decreaseGrid, ROT_INCRX, ROT_INCRY, ROT_INCRZ);
     return true;
   } else {
-    int size;
-    float rough;
-    float a,b,c,d;
-    string output = ""; 
-   /* cout << "Enter the number of rows (=the number of columns): ";
+    //int size;
+    //float rough;
+    //float a,b,c,d;
+    //string output = ""; 
+    cout << "You have chosen to generate a DEM. " << endl; 
+    cout << "Enter the number of rows (=the number of columns) to display: ";
     cin >> size;
     cout << "Enter the roughness level: ";
     cin >> rough;
     cout << "Where would you like to put this file? ";
     cin >> output;
-    cout << "Please enter the four starting elevations: ";
-    cin >> a >> b >> c >> d;*/
+    cout << "Choose which elevation to edit by clicking the point next to the appropriate letter." << endl;
+    cout << "Pressing the 'o' key will increase the elevation, and pressing 'p' will decrease the elevation." << endl;
+    cout << "The default increment in 10, but click the appropriate button to make it 1 or 0.01." << endl;
+    cout << "To add water to a region, click the water button and then the region you would like to add to. " << endl;
+    cout << "You may add water to as many regions as you'd like." << endl;
+    cout << "When you have finished your input click 'Finished'." << endl;
+
     //defaults for testing
-    size = 9;
+   /* size = 9;
     rough = 10;
     output = "testOutput.grd";
     a = 500;
     b = 275;
     c = 50;
-    d = 300;
+    d = 300;*/
 
    /* CurrentValues.generateRandomDEM(size, rough, output, a, b, c, d);
     myfile.open (output.c_str());
@@ -155,10 +169,10 @@ void display ()
       glColor3f(1,0,0);
       glPointSize(10);
       glBegin(GL_POINTS);
-        glVertex3f(-1,-1,0);
-        glVertex3f(-1,1,0);
-        glVertex3f(1,1,0);
-        glVertex3f(1,-1,0);
+        glVertex3f(-1,-1,0); // c
+        glVertex3f(-1,1,0); // a
+        glVertex3f(1,1,0); // b
+        glVertex3f(1,-1,0); // d
       glEnd();
         
       glColor3f(1,1,1);
@@ -237,6 +251,45 @@ void display ()
       glColor3f(0,0,0);
       glRasterPos3f(2.1, 0.88, 0.0); 
       writeBitmapString(GLUT_BITMAP_TIMES_ROMAN_10, "INCREMENT BY 0.1"); 
+
+      if (water)
+        glColor3f(0.2, 0.6, 1.0);
+      else
+        glColor3f(0.2, 0.4, 1.0);
+      glRectf(2.0,-0.4, 2.8, -0.6);
+      glColor3f(0,0,0);
+      glRasterPos3f(2.2, -0.52, 0.0); 
+      writeBitmapString(GLUT_BITMAP_TIMES_ROMAN_10, "ADD WATER");
+
+      if (waterA){
+        glColor3f(0.2, 0.6, 1.0);
+        glPointSize(5);
+        glBegin(GL_POINTS);
+          glVertex3f(-0.9, 1, 0);
+        glEnd();
+      }
+      if (waterB){
+        glColor3f(0.2, 0.6, 1.0);
+        glPointSize(5);
+        glBegin(GL_POINTS);
+          glVertex3f(1.1, 1, 0);
+        glEnd();
+      }
+      if (waterC){
+        glColor3f(0.2, 0.6, 1.0);
+        glPointSize(5);
+        glBegin(GL_POINTS);
+          glVertex3f(-0.9, -1, 0);
+        glEnd();
+      }
+      if (waterD){
+        glColor3f(0.2, 0.6, 1.0);
+        glPointSize(5);
+        glBegin(GL_POINTS);
+          glVertex3f(1.1, -1, 0);
+        glEnd();
+      }
+
 
     }else{
     CurrentValues.drawTriangulation(WINDOW_WIDTH, WINDOW_HEIGHT, rotateX, rotateY, rotateZ, ROT_INCRX, ROT_INCRY, ROT_INCRZ);
@@ -330,29 +383,49 @@ void myMouse (int button, int state, int x, int y)
 
     if (x1 >= 346 && x1 <= 356){
       if (y1 >= 530 && y1 <= 540){ // a
-        on =1;
+        if (water == true){
+          waterA = true;
+          water = false;
+        }
+        else
+          on =1;
       }else if (y1 >= 305 && y1 <= 315){ // c
-        on = 3; 
+        if (water == true){
+          waterC = true;
+          water = false;
+        }
+        else
+          on = 3; 
       }
     }
     if (x1 >= 645 && x1 <= 655){
       if (y1 >= 530 && y1 <= 538){ // b 
-        on = 2;
+        if (water == true){
+          waterB = true;
+          water = false;
+        }
+        else
+          on = 2;
+
       } else if (y1 >= 305 && y1 <= 315){ // d
-        on = 4;
+        if (water == true){
+          waterD = true;
+          water = false;
+        }
+        else
+          on = 4;
       }
     }
     // check if finished
     if (x1 >=427 && x1 <=573 && y1 >= 196 && y1 <= 217){
       glEnable (GL_LIGHTING);
-      cout << "finished " << endl;
-      int size = 257;
-      int rough = 10;
-      string output = "testOutput.grd";
+      //cout << "finished " << endl;
+      //size = 257;
+     // rough = 1;
+     // output = "testOutput.grd";
       ifstream myfile;
       interfaceOn = false;
-      cout << "Your final corner elevations are " << elA << " " << elB << " " << elC << " " << elD << endl;
-      CurrentValues.generateRandomDEM(size, rough, output, elA, elB, elC, elD);
+      CurrentValues.generateRandomDEM(size, rough, output, elA, elB, elC, elD, waterA, waterB, waterC, waterD);
       myfile.open (output.c_str());
       assert( myfile.is_open() );
       CurrentValues.inputFile(myfile);
@@ -366,6 +439,8 @@ void myMouse (int button, int state, int x, int y)
         EL_INCR = 1;
       } else if (y1 >= 424 && y1 <= 443){
         EL_INCR = 10;
+      } else if (y1 >= 355 && y1 <= 376){
+        water = true;
       }
     }
   }
@@ -461,11 +536,9 @@ void keyboard (unsigned char key, int x, int y)
         ROT_INCRY = ROT_INCRY + 5;
         break;
       case '1': // zoom in
-        cout << "Zooming In" << endl;
         z = z - .5;
         break;
       case '7': // zoom out
-        cout << "Zooming Out" << endl;
         z = z + .5;
         break;
       case 'o':

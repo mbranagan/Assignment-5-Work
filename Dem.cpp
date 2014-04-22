@@ -16,8 +16,11 @@
 vector <Point> currentDEM;
 vector <Point> uiPoints;
 
-float avgSlope = 0;
-
+float avgSlope;
+bool wA2 = false;
+bool wB2 = false;
+bool wC2 = false;
+bool wD2 = false;
 float minSlope, maxSlope;
 using namespace std;
 Dem::Dem(ifstream& myfile)
@@ -64,7 +67,7 @@ Dem:: Dem(){
 	this->ncols = 0;
 }
 
-void Dem::generateRandomDEM(int size, float rough, string output, float a, float b, float c, float d){
+void Dem::generateRandomDEM(int size, float rough, string output, float a, float b, float c, float d, bool wA, bool wB, bool wC, bool wD){
 	ncols = size;
 	nrows = size;
 	xllcorner = 0;
@@ -89,14 +92,48 @@ void Dem::generateRandomDEM(int size, float rough, string output, float a, float
 	}
 	scaley = SCALEY_FACTOR/maxValue;
 
-	cout << "a " << a << " b " << b << " c " << c << " d " << d << endl;
-	cout << "loc1 " << 0 << " loc2 " << ncols-1 << " loc3 " << max-ncols << " loc4 " << max-1 << endl;
+	//cout << "a " << a << " b " << b << " c " << c << " d " << d << endl;
+	//cout << "loc1 " << 0 << " loc2 " << ncols-1 << " loc3 " << max-ncols << " loc4 " << max-1 << endl;
 	elevationValues[0] = a;
 	elevationValues[ncols-1] = b;
 	elevationValues[max-ncols] = c;
 	elevationValues[max-1] = d;
+
 	randomMidpointDisplacement(a, b, c, d, 0, ncols-1, max-ncols, max-1, rough);
 
+	if (wC){
+		cout << "wC" << endl;
+		int a1 = (max-ncols)+1;
+		int b1 = (max-ncols)+2;
+		int c1 = (max-ncols)-(ncols-1);
+		elevationValues[a1] = elevationValues[b1] = elevationValues[c1];
+		for (int i = 0; i < ceil((ncols)/8); i++){
+			elevationValues[a1+1] = elevationValues[b1+1] = elevationValues[c1+1];
+			elevationValues[a1-ncols] = elevationValues[b1-ncols] = elevationValues[c1-ncols];
+			a1 = a1+1;
+			b1 = b1+1;
+			c1 = c1+1;
+			//cout << "i " << i << endl;
+		}
+		cout << "CEILING " << ceil((ncols)/8) << endl;
+		//cout << "ncols " << ncols;
+		wC2 = true;
+	}
+	if (wD){
+		//cout << "wD" << endl;
+		wD2 = true;
+		//elevationValues[(max-1)-1] = elevationValues[(max-1)-(ncols+1)] = elevationValues[(max-1)-(ncols+2)];
+	}
+	if (wA){
+		//wA2 = true;
+		//cout << "wA" << endl;
+		elevationValues[1] = elevationValues[2] = elevationValues[(ncols+2)];
+	}
+	if (wB){
+		wB2 = true;
+		//cout << "wB" << endl;
+		elevationValues[ncols-2] = elevationValues[ncols-3] = elevationValues[(ncols-1)+(ncols-1)];
+	}
  	ofstream myfile;
   	myfile.open (output);
   	maxValue = 0;
@@ -108,7 +145,7 @@ void Dem::generateRandomDEM(int size, float rough, string output, float a, float
 	myfile << "yllcorner " << 0 << endl;
 	myfile << "cellsize " << 10 << endl;
 	for (int j = 0; j < max; j++){
-		cout << j << " " << elevationValues[j] << endl;
+		//cout << j << " " << elevationValues[j] << endl;
 		assert(elevationValues[j] != -1);
 		if (elevationValues[j] == -1){
 			elevationValues[j] = 30;
@@ -136,55 +173,75 @@ void Dem::randomMidpointDisplacement(float a, float b, float c, float d, int loc
 	}
 	assert(s < 1);
 	s = x*(sqrt((-2*log(s))/s));
+	if (s<0){
+		s = sqrt(s*s);
+	}
 	float R = rough * tempcell * s;
-	cout << "tempcell " << tempcell << endl;
+	//cout << "tempcell " << tempcell << endl;
 	float e = ((a + b + c + d)/4) + R;
+	assert(a == elevationValues[loc1]);
+	assert(b == elevationValues[loc2]);
+	assert(c == elevationValues[loc3]);
+	assert(d == elevationValues[loc4]);
+	//assert(elevationValues[loc1] >= 0);
+	//assert(elevationValues[loc2] >= 0);
+	//assert(elevationValues[loc3] >= 0);
+	//assert(elevationValues[loc4] >= 0);
+	
+
+	
 	int newLoc = (loc1+loc2+loc3+loc4)/4;
 	assert(newLoc != 0);
-	cout << " newLoc " << newLoc << endl;
-	elevationValues[newLoc] = e;
+	//cout << " newLoc " << newLoc << endl;
+	if (elevationValues[newLoc] < 0)
+		elevationValues[newLoc] = e;
 	if ((newLoc-loc1) == (ncols+1)){
-		if (elevationValues[loc2-1] == -1){
+		if (elevationValues[loc2-1] < 0){
 			elevationValues[loc2-1] = (a+b)/2;
 		}
-		if (elevationValues[loc4-1] == -1){
+		if (elevationValues[loc4-1] < 0){
 			elevationValues[loc4-1] = (d+c)/2;
-			cout << "loc4-1 " << loc4-1 << endl;
+			//cout << "loc4-1 " << loc4-1 << endl;
 		}
-		if (elevationValues[loc3-ncols] == -1){
+		if (elevationValues[loc3-ncols] < 0){
 			elevationValues[loc3-ncols] = (a+c)/2;
 			//cout << "loc3-ncols " << loc3-ncols << endl;
 		}
-		if (elevationValues[(loc3-ncols)+2] == -1){
+		if (elevationValues[(loc3-ncols)+2] < 0){
 			elevationValues[(loc3-ncols)+2] = (b+d)/2;
 		}
-		cout << "finished" << endl;
+		//cout << "finished" << endl;
 	}else{
+		assert(loc1 >= 0);
+		assert(loc2 >= 0);
+		assert(loc3 >= 0);
+		assert(loc4 >= 0);
 		int loc2a = loc1 + ((loc2 - loc1) / 2);
 		int loc3a = loc1 + ((loc3 - loc1) / 2);
-		if (elevationValues[loc2a] == -1)
+		if (elevationValues[loc2a]  < 0)
 			elevationValues[loc2a] = (a+b)/2;
-		if (elevationValues[loc3a] == -1)
+		if (elevationValues[loc3a] < 0)
 			elevationValues[loc3a] = (a+c)/2;
 		// top left square
 		randomMidpointDisplacement(a, elevationValues[loc2a], elevationValues[loc3a], e, loc1, loc2a, loc3a, newLoc, rough);
 
 		// top right square
 		int loc4a = loc2 + ((loc4 - loc2)/2);	
-		if (elevationValues[loc4a] == -1)
+		if (elevationValues[loc4a] < 0)
 			elevationValues[loc4a] = (d+b)/2;
 		randomMidpointDisplacement(elevationValues[loc2a], b, e, elevationValues[loc4a], loc2a, loc2, newLoc, loc4a, rough);
 
 		// bottom left square
 		int loc4b = loc3 +((loc4 - loc3)/2);
-		if (elevationValues[loc4b] == -1)
+		if (elevationValues[loc4b] < 0)
 			elevationValues[loc4b] = (c+d)/2;
 		randomMidpointDisplacement(elevationValues[loc3a], e, c, elevationValues[loc4b], loc3a, newLoc, loc3, loc4b, rough);
 
 		// bottom right square
 		randomMidpointDisplacement(e, elevationValues[loc4a], elevationValues[loc4b], d, newLoc, loc4a, loc4b, loc4, rough);
 	}
-
+	//cout << "loc1 " << loc1 << " loc2 " << loc2 << " loc3 " << loc3 << " loc4 " << loc4 << endl;
+ 
 }
 void Dem:: inputFile(float rows, float cols, float xllcorner, float yllcorner, float cellsize){
 
@@ -228,6 +285,7 @@ void Dem:: inputFile(float rows, float cols, float xllcorner, float yllcorner, f
 		scalex = scalez = SCALE_FACTOR/xspace;//(nrows * 1);// 285555.5556);
 	}
 	scaley = SCALEY_FACTOR/maxValue;
+	cout << "NORWS " << nrows << " NCOLS  " << ncols << "MAX " << maxValue << endl;
 	//scalex = scaley = scalez = ((double)ncols / 285555.5556);
 }
 void Dem:: inputFile(ifstream& myfile){
@@ -305,12 +363,16 @@ void Dem::drawTriangulation(float windowWidth, float windowHeight, float rotateX
 	float highSlope;
 	//cout << "maxValue " << maxValue << " minValue " << minValue << endl;
 	float x = maxValue - minValue;
+
 	//cout << "maxValue - minValue " << x << endl;
 	treeLineCutOff =(x*75)/100;
 	x = maxSlope - minSlope;
+	//cout << "maxSlope - minSlope " << x << endl;
 	highSlope = (x*75)/100;
 	//treeLineCutOff = maxValue-x;
+	//cout << avgSlope << " " << triangulation.size() << endl;
 	avgSlope = avgSlope / triangulation.size();
+	//cout << "highSlope: " << highSlope << endl;
 	//cout << "avgSlope: " << avgSlope << endl;
 	for (int i = 0; i < triangulation.size(); i++){
 		glBegin(GL_TRIANGLE_STRIP);
@@ -336,11 +398,13 @@ void Dem::drawTriangulation(float windowWidth, float windowHeight, float rotateX
 				lowestPoint = y3;
 			float slope = triangulation.at(i).getSlope();
 			bool slopeColor = false;
-			
+
 			//cout << "slope " << slope << endl;
-			if (slope == 0) {
+			//cout << "slope " << slope << endl;
+			if (/*slope == 0*/ slope <1) {
 				glColor3f(0.0,0.8,1.0); // no slope is blue
 				slopeColor = true;
+				//cout << "BLUE" << endl;
 			//	cout << "blue" << endl;
 			} else if(slope > highSlope){
 				glColor3f(0.2,0.2,0.2); // steep slope gray
@@ -435,7 +499,7 @@ void Dem::calculateNormals(){
 void Dem::triangulateDEM(vector<Point> allPoints){
 	triangulation.clear();
 	//cout << "Begin triangulation" << endl;
-
+	avgSlope = 0;
 	maxSlope = 0;
 	minSlope = 99999;
 	for (int i = 0; i < nrows-1; i++){
@@ -450,7 +514,8 @@ void Dem::triangulateDEM(vector<Point> allPoints){
 			Point p2 = currentDEM.at((i*ncols)+j+1);
 			Point p3 = currentDEM.at(((i+1)*ncols)+j+1);
 			Triangle newTri(p1, p2, p3);
-			avgSlope += newTri.getSlope();
+			avgSlope = avgSlope + newTri.getSlope();
+			
 			//newTri.printTriangle();
 			triangulation.push_back(newTri);
 			if (newTri.getSlope() > maxSlope){

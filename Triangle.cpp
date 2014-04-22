@@ -78,6 +78,22 @@ void Triangle::printTriangle(){
 }
 
 void Triangle::calculateSlope(){
+	float maxElevation = get1Y();
+	float minElevation = get1Y();
+	if (get2Y() > maxElevation){
+		maxElevation = get2Y();
+	} else if (get2Y() < minElevation){
+		minElevation = get2Y();
+	}
+	if (get3Y() > maxElevation){
+		maxElevation = get3Y();
+	} else if (get3Y() < minElevation){
+		minElevation = get3Y();
+	}
+
+	slope = maxElevation - minElevation;
+/*
+	
 	float a1 = get2X() - get1X(); // delta X12
 	float b1 = get2Y() - get1Y(); // delta Y12
 	float c1 = get2Z() - get1Z(); // delta Z12
@@ -103,5 +119,7 @@ void Triangle::calculateSlope(){
 
 	float d0 = sqrt(a0*a0+b0*b0); // magnitude of vector in X-Y plane
 	slope = abs(d0/c0*100); // triangle slope in %
+	*/
+	
 
 }
