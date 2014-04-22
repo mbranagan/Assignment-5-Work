@@ -98,6 +98,7 @@ bool inputFile(){
     assert( myfile.is_open() );
     //displayInstructions();
     CurrentValues.inputFile(myfile);
+    displayInstructions();
     // CurrentValues.randomMidpointDisplacement();
    // CurrentValues.drawDEM(WINDOW_WIDTH, WINDOW_HEIGHT, rotateX, rotateY, rotateZ, increseGrid, decreaseGrid, ROT_INCRX, ROT_INCRY, ROT_INCRZ);
     return true;
@@ -293,6 +294,7 @@ void display ()
 
     }else{
     CurrentValues.drawTriangulation(WINDOW_WIDTH, WINDOW_HEIGHT, rotateX, rotateY, rotateZ, ROT_INCRX, ROT_INCRY, ROT_INCRZ);
+
   }
     glutSwapBuffers();
   }
@@ -425,6 +427,7 @@ void myMouse (int button, int state, int x, int y)
      // output = "testOutput.grd";
       ifstream myfile;
       interfaceOn = false;
+      displayInstructions();
       CurrentValues.generateRandomDEM(size, rough, output, elA, elB, elC, elD, waterA, waterB, waterC, waterD);
       myfile.open (output.c_str());
       assert( myfile.is_open() );
